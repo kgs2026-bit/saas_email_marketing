@@ -111,82 +111,93 @@ router.get(
 // @route   POST /api/auth/refresh
 // @desc    Refresh access token
 // @access  Public
-router.post('/refresh', async (req: Request, res: Response, next) => {
-  try {
-    const { refreshToken } = req.body;
+router.post(
+  '/refresh',
+  async (req: Request, res: Response, next) => {
+    try {
+      const { refreshToken } = req.body;
 
-    if (!refreshToken) {
-      throw new Error('Refresh token required');
+      if (!refreshToken) {
+        throw new Error('Refresh token required');
+      }
+
+      const result = await authService.refreshToken(refreshToken);
+      res.json(result);
+    } catch (error: any) {
+      next(error);
     }
-
-    const result = await authService.refreshToken(refreshToken);
-    res.json(result);
-  } catch (error: any) {
-    next(error);
   }
 );
 
 // @route   POST /api/auth/logout
 // @desc    Logout user (invalidate refresh token)
 // @access  Private
-router.post('/logout', authenticateToken, async (req: AuthRequest, res: Response, next) => {
-  try {
-    const { refreshToken } = req.body;
+router.post(
+  '/logout',
+  authenticateToken,
+  async (req: AuthRequest, res: Response, next) => {
+    try {
+      const { refreshToken } = req.body;
 
-    if (!refreshToken) {
-      return res.json({ success: true });
+      if (!refreshToken) {
+        return res.json({ success: true });
+      }
+
+      await authService.logout(req.user!.id, refreshToken);
+      res.json({ success: true });
+    } catch (error: any) {
+      next(error);
     }
-
-    await authService.logout(req.user!.id, refreshToken);
-    res.json({ success: true });
-  } catch (error: any) {
-    next(error);
   }
 );
 
 // @route   GET /api/auth/me
 // @desc    Get current user
 // @access  Private
-router.get('/me', authenticateToken, async (req: AuthRequest, res: Response, next) => {
-  try {
-    const user = await prisma.user.findUnique({
-      where: { id: req.user!.id },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        avatarUrl: true,
-        createdAt: true
+router.get(
+  '/me',
+  authenticateToken,
+  async (req: AuthRequest, res: Response, next) => {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: req.user!.id },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          avatarUrl: true,
+          createdAt: true
+        }
+      });
+
+      if (!user) {
+        throw new Error('User not found');
       }
-    });
 
-    if (!user) {
-      throw new Error('User not found');
-    }
-
-    // Get user's workspaces
-    const memberships = await prisma.workspaceMember.findMany({
-      where: { userId: user.id },
-      include: {
-        workspace: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-            plan: true
+      // Get user's workspaces
+      const memberships = await prisma.workspaceMember.findMany({
+        where: { userId: user.id },
+        include: {
+          workspace: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              plan: true
+            }
           }
         }
-      }
-    });
+      });
 
-    res.json({
-      user,
-      workspaces: memberships.map(m => m.workspace)
-    });
-  } catch (error: any) {
-    next(error);
+      res.json({
+        user,
+        workspaces: memberships.map(m => m.workspace)
+      });
+    } catch (error: any) {
+      next(error);
+    }
   }
-});
+);
 
 // @route   POST /api/auth/change-password
 // @desc    Change password

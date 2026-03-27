@@ -11,28 +11,33 @@ const router = Router();
 // @route   GET /api/webhooks
 // @desc    Get workspace webhooks
 // @access  Private
-router.get('/', authenticateToken, requireWorkspace, async (req: AuthRequest, res: Response, next) => {
-  try {
-    const webhooks = await prisma.webhook.findMany({
-      where: {
-        workspaceId: req.workspace!.id
-      }
-    });
+router.get(
+  '/',
+  authenticateToken,
+  requireWorkspace,
+  async (req: AuthRequest, res: Response, next) => {
+    try {
+      const webhooks = await prisma.webhook.findMany({
+        where: {
+          workspaceId: req.workspace!.id
+        }
+      });
 
-    // Don't return the secret
-    const safeWebhooks = webhooks.map(w => ({
-      id: w.id,
-      eventType: w.eventType,
-      url: w.url,
-      isActive: w.isActive,
-      createdAt: w.createdAt
-    }));
+      // Don't return the secret
+      const safeWebhooks = webhooks.map(w => ({
+        id: w.id,
+        eventType: w.eventType,
+        url: w.url,
+        isActive: w.isActive,
+        createdAt: w.createdAt
+      }));
 
-    res.json(safeWebhooks);
-  } catch (error: any) {
-    next(error);
+      res.json(safeWebhooks);
+    } catch (error: any) {
+      next(error);
+    }
   }
-});
+);
 
 // @route   POST /api/webhooks
 // @desc    Create webhook
@@ -106,7 +111,7 @@ router.put(
       next(error);
     }
   }
-});
+);
 
 // @route   DELETE /api/webhooks/:webhookId
 // @desc    Delete webhook
