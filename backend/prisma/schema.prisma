@@ -240,6 +240,17 @@ model CampaignContact {
   @@unique([campaignId, contactId])
 }
 
+model CampaignInbox {
+  campaignId String
+  inboxId    String
+  createdAt  DateTime @default(now())
+
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  inbox      Inbox    @relation(fields: [inboxId], references: [id], onDelete: Cascade)
+
+  @@unique([campaignId, inboxId])
+}
+
 model EmailLog {
   id            String   @id @default(cuid())
   workspaceId   String
