@@ -21,7 +21,8 @@ model User {
   ownedWorkspaces Workspace[]     @relation("WorkspaceOwner")
   subscriptions Subscription[]
   sessions      Session[]
-  invitations   Invitation[]
+  invitations   Invitation[] @relation("UserInvitations")
+  teamMembers   TeamMember[]
 }
 
 model Session {
@@ -52,6 +53,12 @@ model Workspace {
   contacts    Contact[]
   lists       ContactList[]
   invitations Invitation[]
+  subscriptions Subscription[]
+  emailLogs   EmailLog[]
+  replies     Reply[]
+  webhooks    Webhook[]
+  referrals   Referral[]
+  teamMembers TeamMember[]
 }
 
 model WorkspaceMember {
@@ -79,6 +86,9 @@ model Invitation {
   createdAt    DateTime @default(now())
 
   workspace    Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  inviter      User      @relation(fields: [invitedBy], references: [id])
+
+  @@index([invitedBy])
 }
 
 model Subscription {
@@ -119,6 +129,7 @@ model Inbox {
   workspace      Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
   campaigns      CampaignInbox[]
   emailLogs      EmailLog[]
+  replies        Reply[]
 }
 
 model Campaign {
@@ -274,6 +285,7 @@ model EmailLog {
   campaign      Campaign?  @relation(fields: [campaignId], references: [id])
   inbox         Inbox      @relation(fields: [inboxId], references: [id])
   contact       Contact    @relation(fields: [contactId], references: [id])
+  replies       Reply[]
 }
 
 model Reply {
