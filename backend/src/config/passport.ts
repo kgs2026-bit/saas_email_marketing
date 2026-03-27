@@ -1,5 +1,5 @@
 import passport from 'passport';
-import GoogleStrategy from 'passport-google-oauth20';
+const GoogleStrategy = require('passport-google-oauth20').Strategy;
 import { prisma } from '../config/database';
 
 // Configure Google OAuth strategy
