@@ -77,9 +77,9 @@ export const webhookQueue = new Queue(QUEUE_NAMES.WEBHOOK, {
 export const emailWorker = new Worker(
   QUEUE_NAMES.EMAIL,
   async (job: Job) => {
-    const { type, data } = job;
+    const { name, data } = job;
 
-    switch (type) {
+    switch (name) {
       case 'SEND_EMAIL':
         await sendEmailJob(data);
         break;
@@ -90,7 +90,7 @@ export const emailWorker = new Worker(
         await processReplyJob(data);
         break;
       default:
-        logger.warn(`Unknown job type: ${type}`);
+        logger.warn(`Unknown job type: ${name}`);
     }
   },
   { connection: redisConnection }
@@ -112,9 +112,9 @@ emailWorker.on('error', (err: Error) => {
 export const campaignWorker = new Worker(
   QUEUE_NAMES.CAMPAIGN,
   async (job: Job) => {
-    const { type, data } = job;
+    const { name, data } = job;
 
-    switch (type) {
+    switch (name) {
       case 'START_CAMPAIGN':
         await startCampaignJob(data);
         break;
@@ -128,7 +128,7 @@ export const campaignWorker = new Worker(
         await scheduleEmailJob(data);
         break;
       default:
-        logger.warn(`Unknown campaign job type: ${type}`);
+        logger.warn(`Unknown campaign job type: ${name}`);
     }
   },
   { connection: redisConnection }

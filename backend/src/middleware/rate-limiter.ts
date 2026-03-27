@@ -15,7 +15,8 @@ export const rateLimiter = rateLimit({
   // TypeScript type fix: keyGenerator must return string
   keyGenerator: (req: Request): string => {
     // Use API key or IP as identifier
-    return req.headers['x-api-key'] as string || req.ip;
+    const apiKey = req.headers['x-api-key'];
+    return typeof apiKey === 'string' && apiKey.length > 0 ? apiKey : req.ip;
   }
 });
 
@@ -39,7 +40,8 @@ export const apiKeyRateLimiter = (maxRequests: number, windowMs: number) => {
     legacyHeaders: false,
     keyGenerator: (req: Request): string => {
       // Use API key or IP as identifier
-      return req.headers['x-api-key'] as string || req.ip;
+      const apiKey = req.headers['x-api-key'];
+      return typeof apiKey === 'string' && apiKey.length > 0 ? apiKey : req.ip;
     }
   });
 };

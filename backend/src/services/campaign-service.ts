@@ -98,7 +98,7 @@ export class CampaignService {
     return step;
   }
 
-  async addContacts(campaignId: string, workspaceId: string, contactIds: string[]) {
+  async addContacts(campaignId: string, workspaceId: string, contactIds: string[]): Promise<Array<{ contactId: string; success: boolean; error?: string }>> {
     const campaign = await prisma.campaign.findFirst({
       where: { id: campaignId, workspaceId }
     });
@@ -117,7 +117,7 @@ export class CampaignService {
       throw new Error(`Contact limit exceeded. Current: ${contactCount}, Adding: ${contactIds.length}, Limit: ${planLimit}`);
     }
 
-    const results = [];
+    const results: Array<{ contactId: string; success: boolean; error?: string }> = [];
     for (const contactId of contactIds) {
       try {
         await prisma.campaignContact.create({

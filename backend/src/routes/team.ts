@@ -1,4 +1,4 @@
-import { Router, Response, NextFunction } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { body, validationResult } from 'express-validator';
 import { prisma } from '../config/database';
 import { authenticateToken, requireWorkspace, requireRole, AuthRequest } from '../middleware/auth';

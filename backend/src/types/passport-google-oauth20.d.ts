@@ -17,5 +17,7 @@ declare module 'passport-google-oauth20' {
     };
   }
 
-  export = Strategy;
+  const GoogleStrategy: Strategy;
+  export default GoogleStrategy;
+  export = GoogleStrategy;
 }
