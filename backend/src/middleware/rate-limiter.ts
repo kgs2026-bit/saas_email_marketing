@@ -16,7 +16,11 @@ export const rateLimiter = rateLimit({
   keyGenerator: (req: Request): string => {
     // Use API key or IP as identifier
     const apiKey = req.headers['x-api-key'];
-    return typeof apiKey === 'string' && apiKey.length > 0 ? apiKey : req.ip;
+    if (typeof apiKey === 'string' && apiKey.length > 0) {
+      return apiKey;
+    }
+    // req.ip can be undefined in types, but in practice it's always set by express
+    return req.ip || '0.0.0.0';
   }
 });
 
@@ -41,7 +45,11 @@ export const apiKeyRateLimiter = (maxRequests: number, windowMs: number) => {
     keyGenerator: (req: Request): string => {
       // Use API key or IP as identifier
       const apiKey = req.headers['x-api-key'];
-      return typeof apiKey === 'string' && apiKey.length > 0 ? apiKey : req.ip;
+      if (typeof apiKey === 'string' && apiKey.length > 0) {
+        return apiKey;
+      }
+      // req.ip can be undefined in types, but in practice it's always set by express
+      return req.ip || '0.0.0.0';
     }
   });
 };

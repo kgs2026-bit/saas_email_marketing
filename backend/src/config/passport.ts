@@ -1,10 +1,9 @@
 import passport from 'passport';
-import GoogleStrategy from 'passport-google-oauth20';
+import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { prisma } from '../config/database';
 
 // Configure Google OAuth strategy
 passport.use(
-  'google',
   new GoogleStrategy(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,

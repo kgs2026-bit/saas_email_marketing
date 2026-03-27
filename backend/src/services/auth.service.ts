@@ -1,4 +1,4 @@
-import * as jwt from 'jsonwebtoken';
+import jwt = require('jsonwebtoken');
 import bcrypt from 'bcryptjs';
 import { prisma } from '../config/database';
 import { generateSecureToken } from '../utils/crypto';
@@ -309,17 +309,13 @@ export class AuthService {
   }
 
   private generateTokens(userId: string) {
-    const accessToken = jwt.sign(
-      { userId },
-      process.env.JWT_SECRET!,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '15m' }
-    );
+    const secret = process.env.JWT_SECRET as string;
+    const refreshSecret = process.env.JWT_REFRESH_SECRET as string;
+    const expiresIn = process.env.JWT_EXPIRES_IN || '15m';
+    const refreshExpiresIn = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
 
-    const refreshToken = jwt.sign(
-      { userId },
-      process.env.JWT_REFRESH_SECRET!,
-      { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' }
-    );
+    const accessToken = jwt.sign({ userId }, secret, { expiresIn });
+    const refreshToken = jwt.sign({ userId }, refreshSecret, { expiresIn: refreshExpiresIn });
 
     return { accessToken, refreshToken };
   }
