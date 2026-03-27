@@ -21,7 +21,7 @@ model User {
   ownedWorkspaces Workspace[]     @relation("WorkspaceOwner")
   subscriptions Subscription[]
   sessions      Session[]
-  invitations   Invitation[] @relation("UserInvitations")
+  sentInvitations Invitation[] @relation("SentInvitations")
   teamMembers   TeamMember[]
 }
 
@@ -86,7 +86,7 @@ model Invitation {
   createdAt    DateTime @default(now())
 
   workspace    Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  inviter      User      @relation(fields: [invitedBy], references: [id])
+  inviter      User      @relation("SentInvitations", fields: [invitedBy], references: [id])
 
   @@index([invitedBy])
 }
