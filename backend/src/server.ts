@@ -57,13 +57,13 @@ app.use('/api/team', teamRoutes);
 app.use('/api/webhooks', webhookHandler);
 
 // Stripe webhook endpoint (must be before body parsing middleware for raw body)
-app.use('/api/webhooks/stripe', stripeWebhookRoutes.router);
+app.use('/api/webhooks/stripe', stripeWebhookRoutes);
 
 // Tracking routes
 app.use('/track', trackRoutes);
 
 // 404 handler
-app.use('*', (req, res) => {
+app.use('*', (_req, res) => {
   res.status(404).json({ error: 'Route not found' });
 });
 

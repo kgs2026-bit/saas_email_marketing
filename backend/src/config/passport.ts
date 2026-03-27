@@ -10,10 +10,11 @@ passport.use(
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       callbackURL: `${process.env.API_URL}/api/auth/google/callback`
     },
-    async (accessToken: string, refreshToken: string, profile: any, done: any) => {
+    async (_accessToken, _refreshToken, profile: any, done: any) => {
       try {
         const { id, emails, displayName, photos } = profile;
 
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const user = await prisma.user.upsert({
           where: { googleId: id },
           update: {

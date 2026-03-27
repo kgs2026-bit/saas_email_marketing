@@ -1,6 +1,5 @@
-import { Router, Request, Response } from 'express';
+import { Router, Response, NextFunction } from 'express';
 import { body, validationResult } from 'express-validator';
-import csv from 'csv-parse';
 import { prisma } from '../config/database';
 import { authenticateToken, requireWorkspace, AuthRequest } from '../middleware/auth';
 import { validatePlanLimits } from '../middleware/workspace';
@@ -31,7 +30,7 @@ router.get('/', authenticateToken, requireWorkspace, async (req: AuthRequest, re
         where: { listId: listId as string },
         select: { contactId: true }
       });
-      where.id = { in: listContacts.map(lc => lc.contactId) };
+      where.id = { in: listContacts.map((lc: any) => lc.contactId) };
     }
 
     if (status) {
@@ -106,7 +105,7 @@ router.post(
     body('position').optional().trim(),
     body('tags').optional().isArray()
   ],
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -146,7 +145,7 @@ router.post(
         }
       });
 
-      res.status(201).json(contact);
+      return res.status(201).json(contact);
     } catch (error: any) {
       // Handle unique constraint violation
       if (error.code === 'P2002') {
@@ -165,7 +164,7 @@ router.post(
   '/upload',
   authenticateToken,
   requireWorkspace,
-  async (req: AuthRequest, res: Response, next) => {
+  async (_req: AuthRequest, _res: Response, next: NextFunction) => {
     try {
       // This expects multipart/form-data with a 'file' field
       // Implementation would need multer middleware setup
@@ -185,7 +184,7 @@ router.get(
   '/:contactId',
   authenticateToken,
   requireWorkspace,
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { contactId } = req.params;
 
@@ -239,7 +238,7 @@ router.put(
     body('tags').optional().isArray(),
     body('status').optional().isIn(['ACTIVE', 'UNSUBSCRIBED', 'BOUNCED', 'SPAM_COMPLAINT'])
   ],
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -263,7 +262,7 @@ router.put(
         }
       });
 
-      res.json(contact);
+      return res.json(contact);
     } catch (error: any) {
       next(error);
     }
@@ -277,7 +276,7 @@ router.delete(
   '/:contactId',
   authenticateToken,
   requireWorkspace,
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { contactId } = req.params;
 
@@ -302,7 +301,7 @@ router.post(
   '/:contactId/lists/:listId',
   authenticateToken,
   requireWorkspace,
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { contactId, listId } = req.params;
 
@@ -345,7 +344,7 @@ router.delete(
   '/:contactId/lists/:listId',
   authenticateToken,
   requireWorkspace,
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { contactId, listId } = req.params;
 
@@ -374,7 +373,7 @@ router.get(
   '/lists',
   authenticateToken,
   requireWorkspace,
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const lists = await prisma.contactList.findMany({
         where: { workspaceId: req.workspace!.id },
@@ -405,7 +404,7 @@ router.post(
   [
     body('name').notEmpty().trim()
   ],
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -430,7 +429,7 @@ router.post(
         }
       });
 
-      res.status(201).json(list);
+      return res.status(201).json(list);
     } catch (error: any) {
       next(error);
     }
@@ -444,7 +443,7 @@ router.post(
   '/lists/:listId/upload',
   authenticateToken,
   requireWorkspace,
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       // CSRF protection would recommend checking referer origin in production
       const { listId } = req.params;

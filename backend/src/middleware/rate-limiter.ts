@@ -1,5 +1,5 @@
 import rateLimit from 'express-rate-limit';
-import { NextFunction, Request, Response } from 'express';
+import { Request } from 'express';
 
 // General rate limiter for all API routes
 export const rateLimiter = rateLimit({
@@ -11,6 +11,11 @@ export const rateLimiter = rateLimit({
   skip: (req: Request) => {
     // Skip rate limiting for health check
     return req.path === '/health';
+  },
+  // TypeScript type fix: keyGenerator must return string
+  keyGenerator: (req: Request): string => {
+    // Use API key or IP as identifier
+    return req.headers['x-api-key'] as string || req.ip;
   }
 });
 
@@ -32,7 +37,7 @@ export const apiKeyRateLimiter = (maxRequests: number, windowMs: number) => {
     message: { error: 'API rate limit exceeded' },
     standardHeaders: true,
     legacyHeaders: false,
-    keyGenerator: (req: Request) => {
+    keyGenerator: (req: Request): string => {
       // Use API key or IP as identifier
       return req.headers['x-api-key'] as string || req.ip;
     }

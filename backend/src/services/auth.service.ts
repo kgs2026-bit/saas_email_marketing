@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { prisma } from '../config/database';
 import { generateSecureToken } from '../utils/crypto';
 import { logger } from '../utils/logger';
+import { JwtPayload } from '../middleware/auth';
 
 const SALT_ROUNDS = 10;
 
@@ -18,7 +19,7 @@ export class AuthService {
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
 
     // Create user and workspace in a transaction
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: any) => {
       const user = await tx.user.create({
         data: {
           email,
@@ -123,7 +124,7 @@ export class AuthService {
         name: user.name,
         avatarUrl: user.avatarUrl
       },
-      workspaces: memberships.map(m => ({
+      workspaces: memberships.map((m: any) => ({
         id: m.workspace.id,
         name: m.workspace.name,
         slug: m.workspace.slug,
@@ -227,7 +228,7 @@ export class AuthService {
         name: user.name,
         avatarUrl: user.avatarUrl
       },
-      workspaces: memberships.map(m => ({
+      workspaces: memberships.map((m: any) => ({
         id: m.workspace.id,
         name: m.workspace.name,
         slug: m.workspace.slug,

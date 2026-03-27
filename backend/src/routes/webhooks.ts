@@ -1,9 +1,8 @@
-import { Router, Request, Response } from 'express';
+import { Router, Response, NextFunction } from 'express';
 import { body, validationResult } from 'express-validator';
 import crypto from 'crypto';
 import { prisma } from '../config/database';
 import { authenticateToken, requireWorkspace, AuthRequest } from '../middleware/auth';
-import { ForbiddenError } from '../middleware/error-handler';
 import { logger } from '../utils/logger';
 
 const router = Router();
@@ -15,7 +14,7 @@ router.get(
   '/',
   authenticateToken,
   requireWorkspace,
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const webhooks = await prisma.webhook.findMany({
         where: {
@@ -24,7 +23,7 @@ router.get(
       });
 
       // Don't return the secret
-      const safeWebhooks = webhooks.map(w => ({
+      const safeWebhooks = webhooks.map((w: any) => ({
         id: w.id,
         eventType: w.eventType,
         url: w.url,
@@ -50,7 +49,7 @@ router.post(
     body('eventType').notEmpty(),
     body('url').isURL()
   ],
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -72,7 +71,7 @@ router.post(
         }
       });
 
-      res.status(201).json({
+      return res.status(201).json({
         ...webhook,
         secret // Only shown once at creation
       });
@@ -89,7 +88,7 @@ router.put(
   '/:webhookId',
   authenticateToken,
   requireWorkspace,
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { webhookId } = req.params;
       const { eventType, url, isActive } = req.body;
@@ -120,7 +119,7 @@ router.delete(
   '/:webhookId',
   authenticateToken,
   requireWorkspace,
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { webhookId } = req.params;
 

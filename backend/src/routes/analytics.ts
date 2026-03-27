@@ -7,9 +7,9 @@ const router = Router();
 // @route   GET /api/analytics/overview
 // @desc    Get overview analytics for workspace
 // @access  Private
-router.get('/overview', authenticateToken, requireWorkspace, async (req: AuthRequest, res: Response, next) => {
+router.get('/overview', authenticateToken, requireWorkspace, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const { workspaceId } = req.workspace!;
+    const workspaceId = req.workspace!.id;
     const { startDate, endDate } = req.query;
 
     const dateFilter = startDate && endDate
@@ -40,13 +40,13 @@ router.get('/overview', authenticateToken, requireWorkspace, async (req: AuthReq
     });
 
     // Calculate metrics
-    const totalSent = emailLogs.filter(l => l.type === 'SENT').length;
-    const totalOpened = emailLogs.filter(l => l.type === 'OPENED').length;
-    const totalClicked = emailLogs.filter(l => l.type === 'CLICKED').length;
-    const totalBounced = emailLogs.filter(l => l.type === 'BOUNCED').length;
-    const totalReplied = emailLogs.filter(l => l.type === 'REPLY').length;
+    const totalSent = emailLogs.filter((l: any) => l.type === 'SENT').length;
+    const totalOpened = emailLogs.filter((l: any) => l.type === 'OPENED').length;
+    const totalClicked = emailLogs.filter((l: any) => l.type === 'CLICKED').length;
+    const totalBounced = emailLogs.filter((l: any) => l.type === 'BOUNCED').length;
+    const totalReplied = emailLogs.filter((l: any) => l.type === 'REPLY').length;
 
-    const activeCampaigns = campaigns.filter(c => c.status === 'ACTIVE').length;
+    const activeCampaigns = campaigns.filter((c: any) => c.status === 'ACTIVE').length;
     const totalCampaigns = campaigns.length;
 
     res.json({
@@ -111,11 +111,11 @@ router.get(
         }
       });
 
-      const totalSent = emailLogs.filter(l => l.type === 'SENT').length;
-      const totalOpened = emailLogs.filter(l => l.type === 'OPENED').length;
-      const totalClicked = emailLogs.filter(l => l.type === 'CLICKED').length;
-      const totalBounced = emailLogs.filter(l => l.type === 'BOUNCED').length;
-      const totalReplied = emailLogs.filter(l => l.type === 'REPLY').length;
+      const totalSent = emailLogs.filter((l: any) => l.type === 'SENT').length;
+      const totalOpened = emailLogs.filter((l: any) => l.type === 'OPENED').length;
+      const totalClicked = emailLogs.filter((l: any) => l.type === 'CLICKED').length;
+      const totalBounced = emailLogs.filter((l: any) => l.type === 'BOUNCED').length;
+      const totalReplied = emailLogs.filter((l: any) => l.type === 'REPLY').length;
 
       // Get daily stats
       const dailyStats = await prisma.emailLog.groupBy({
@@ -162,7 +162,7 @@ router.get(
 router.get('/inboxes', authenticateToken, requireWorkspace, async (req: AuthRequest, res: Response, next) => {
   try {
     const { startDate, endDate } = req.query;
-    const { workspaceId } = req.workspace!;
+    const workspaceId = req.workspace!.id;
 
     const dateFilter = startDate && endDate
       ? {
@@ -195,10 +195,7 @@ router.get('/inboxes', authenticateToken, requireWorkspace, async (req: AuthRequ
       _all: true
     });
 
-    const result = inboxStats.map(inbox => {
-      const perf = inboxPerformance.find(p => p.inboxId === inbox.id) || {
-        _all: { count: 0 }
-      };
+    const result = inboxStats.map((inbox: any) => {
       return {
         inboxId: inbox.id,
         email: inbox.email,
@@ -220,7 +217,7 @@ router.get('/inboxes', authenticateToken, requireWorkspace, async (req: AuthRequ
 // @access  Private
 router.get('/trends', authenticateToken, requireWorkspace, async (req: AuthRequest, res: Response, next) => {
   try {
-    const { workspaceId } = req.workspace!;
+    const workspaceId = req.workspace!.id;
     const { days = 30 } = req.query;
 
     const startDate = new Date();
@@ -238,7 +235,7 @@ router.get('/trends', authenticateToken, requireWorkspace, async (req: AuthReque
       orderBy: { sentAt: 'asc' }
     });
 
-    const result = dailyStats.map(day => ({
+    const result = dailyStats.map((day: any) => ({
       date: day.sentAt.toISOString().split('T')[0],
       sent: day._all.count,
       opened: 0, // Would need separate groupBy or aggregate
@@ -257,7 +254,7 @@ router.get('/trends', authenticateToken, requireWorkspace, async (req: AuthReque
 // @access  Private
 router.get('/replies', authenticateToken, requireWorkspace, async (req: AuthRequest, res: Response, next) => {
   try {
-    const { workspaceId } = req.workspace!;
+    const workspaceId = req.workspace!.id;
     const { limit = 50 } = req.query;
 
     const replies = await prisma.reply.findMany({
@@ -277,9 +274,9 @@ router.get('/replies', authenticateToken, requireWorkspace, async (req: AuthRequ
 
     const stats = {
       totalReplies: replies.length,
-      markedInteresting: replies.filter(r => r.isInteresting).length,
-      byTag: replies.reduce((acc, r) => {
-        r.tags.forEach(tag => {
+      markedInteresting: replies.filter((r: any) => r.isInteresting).length,
+      byTag: replies.reduce((acc: Record<string, number>, r: any) => {
+        r.tags.forEach((tag: string) => {
           acc[tag] = (acc[tag] || 0) + 1;
         });
         return acc;

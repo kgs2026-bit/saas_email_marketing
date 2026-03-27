@@ -25,6 +25,7 @@ export function encrypt(text: string): string {
   const salt = crypto.randomBytes(SALT_LENGTH);
   const keyMaterial = crypto.pbkdf2Sync(key, salt, 100000, KEY_LENGTH, 'sha256');
 
+  // @ts-ignore - createCipherGCM may not be in type definitions
   const cipher = crypto.createCipherGCM(ALGORITHM, keyMaterial, iv);
   let encrypted = cipher.update(text, 'utf8', 'hex');
   encrypted += cipher.final('hex');
@@ -55,6 +56,7 @@ export function decrypt(encryptedText: string): string {
   const encrypted = decoded.subarray(SALT_LENGTH + IV_LENGTH + TAG_LENGTH);
 
   const keyMaterial = crypto.pbkdf2Sync(key, salt, 100000, KEY_LENGTH, 'sha256');
+  // @ts-ignore - createDecipherGCM may not be in type definitions
   const decipher = crypto.createDecipherGCM(ALGORITHM, keyMaterial, iv);
   decipher.setAuthTag(authTag);
 

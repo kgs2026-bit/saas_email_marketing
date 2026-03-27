@@ -73,7 +73,7 @@ router.get('/click/:trackingId', async (req: Request, res: Response) => {
     }
 
     // Redirect to original URL
-    res.redirect(url as string);
+    return res.redirect(url as string);
   } catch (error: any) {
     logger.error('Click tracking error:', error);
     res.status(400).json({ error: 'Invalid tracking ID or URL' });

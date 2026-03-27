@@ -8,21 +8,25 @@ interface JwtPayload {
   workspaceId?: string;
 }
 
+export { JwtPayload };
+
 export interface AuthRequest extends Request {
   user?: {
     id: string;
     email: string;
-    name?: string;
+    name?: string | null;
+    avatarUrl?: string | null;
   };
   workspace?: {
     id: string;
     slug: string;
     plan: string;
     role: string;
+    stripeCustomerId?: string;
   };
 }
 
-export function authenticateToken(req: AuthRequest, res: Response, next: NextFunction) {
+export async function authenticateToken(req: AuthRequest, res: Response, next: NextFunction) {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
@@ -33,9 +37,17 @@ export function authenticateToken(req: AuthRequest, res: Response, next: NextFun
   try {
     const payload = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
 
-    req.user = {
-      id: payload.userId,
-    };
+    // Fetch user from database to get full details
+    const user = await prisma.user.findUnique({
+      where: { id: payload.userId },
+      select: { id: true, email: true, name: true, avatarUrl: true }
+    });
+
+    if (!user) {
+      throw UnauthorizedError('User not found');
+    }
+
+    req.user = user;
 
     next();
   } catch (error) {
@@ -46,7 +58,7 @@ export function authenticateToken(req: AuthRequest, res: Response, next: NextFun
   }
 }
 
-export async function requireWorkspace(req: AuthRequest, res: Response, next: NextFunction) {
+export async function requireWorkspace(req: AuthRequest, _res: Response, next: NextFunction) {
   try {
     const workspaceId = req.params.workspaceId || req.body.workspaceId || req.query.workspaceId;
 
@@ -75,7 +87,8 @@ export async function requireWorkspace(req: AuthRequest, res: Response, next: Ne
       id: membership.workspace.id,
       slug: membership.workspace.slug,
       plan: membership.workspace.plan,
-      role: membership.role
+      role: membership.role,
+      stripeCustomerId: membership.workspace.stripeCustomerId
     };
 
     next();

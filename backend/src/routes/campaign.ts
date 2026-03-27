@@ -1,4 +1,4 @@
-import { Router, Request, Response } from 'express';
+import { Router, Response, NextFunction } from 'express';
 import { body, validationResult } from 'express-validator';
 import { prisma } from '../config/database';
 import { authenticateToken, requireWorkspace, AuthRequest } from '../middleware/auth';
@@ -78,7 +78,7 @@ router.post(
   authenticateToken,
   requireWorkspace,
   createCampaignValidation,
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -91,7 +91,7 @@ router.post(
       };
 
       const campaign = await campaignService.createCampaign(req.workspace!.id, data);
-      res.status(201).json(campaign);
+      return res.status(201).json(campaign);
     } catch (error: any) {
       next(error);
     }
@@ -105,7 +105,7 @@ router.get(
   '/:campaignId',
   authenticateToken,
   requireWorkspace,
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { campaignId } = req.params;
 
@@ -150,7 +150,7 @@ router.put(
   '/:campaignId',
   authenticateToken,
   requireWorkspace,
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { campaignId } = req.params;
       const data = req.body;
@@ -170,7 +170,7 @@ router.delete(
   '/:campaignId',
   authenticateToken,
   requireWorkspace,
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { campaignId } = req.params;
 
@@ -197,7 +197,7 @@ router.post(
     body('delayMinutes').optional().isInt({ min: 0 }),
     body('isEnabled').optional().isBoolean()
   ],
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -207,7 +207,7 @@ router.post(
       const { campaignId } = req.params;
       const step = await campaignService.addStep(campaignId, req.workspace!.id, req.body);
 
-      res.status(201).json(step);
+      return res.status(201).json(step);
     } catch (error: any) {
       next(error);
     }
@@ -221,7 +221,7 @@ router.put(
   '/:campaignId/steps/:stepNumber',
   authenticateToken,
   requireWorkspace,
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { campaignId, stepNumber } = req.params;
       const { subject, body, delayHours, delayDays, delayMinutes, isEnabled } = req.body;
@@ -257,7 +257,7 @@ router.delete(
   '/:campaignId/steps/:stepNumber',
   authenticateToken,
   requireWorkspace,
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { campaignId, stepNumber } = req.params;
 
@@ -301,7 +301,7 @@ router.post(
     body('contactIds').isArray().notEmpty(),
     body('listId').optional()
   ],
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -319,7 +319,7 @@ router.post(
           where: { listId },
           select: { contactId: true }
         });
-        finalContactIds = listContacts.map(lc => lc.contactId);
+        finalContactIds = listContacts.map((lc: any) => lc.contactId);
       }
 
       const results = await campaignService.addContacts(campaignId, req.workspace!.id, finalContactIds);
@@ -333,7 +333,7 @@ router.post(
         });
       }
 
-      res.json({
+      return res.json({
         success: true,
         added: results.filter(r => r.success).length
       });
@@ -350,7 +350,7 @@ router.post(
   '/:campaignId/start',
   authenticateToken,
   requireWorkspace,
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { campaignId } = req.params;
       const campaign = await campaignService.startCampaign(campaignId, req.workspace!.id);
@@ -368,7 +368,7 @@ router.post(
   '/:campaignId/pause',
   authenticateToken,
   requireWorkspace,
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { campaignId } = req.params;
       const campaign = await campaignService.pauseCampaign(campaignId, req.workspace!.id);
@@ -386,7 +386,7 @@ router.post(
   '/:campaignId/resume',
   authenticateToken,
   requireWorkspace,
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { campaignId } = req.params;
       const campaign = await campaignService.resumeCampaign(campaignId, req.workspace!.id);
@@ -404,7 +404,7 @@ router.post(
   '/:campaignId/stop',
   authenticateToken,
   requireWorkspace,
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { campaignId } = req.params;
       const campaign = await campaignService.stopCampaign(campaignId, req.workspace!.id);
@@ -422,7 +422,7 @@ router.get(
   '/:campaignId/stats',
   authenticateToken,
   requireWorkspace,
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { campaignId } = req.params;
       const stats = await campaignService.getCampaignStats(campaignId, req.workspace!.id);
@@ -440,7 +440,7 @@ router.post(
   '/:campaignId/inboxes/:inboxId',
   authenticateToken,
   requireWorkspace,
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { campaignId, inboxId } = req.params;
 
@@ -479,7 +479,7 @@ router.delete(
   '/:campaignId/inboxes/:inboxId',
   authenticateToken,
   requireWorkspace,
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { campaignId, inboxId } = req.params;
 

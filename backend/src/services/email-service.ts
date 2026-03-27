@@ -77,6 +77,7 @@ export class EmailService {
     contactId: string;
     stepId?: string;
     trackingId?: string;
+    fromName?: string;
   }) {
     const { inboxId, to, subject, html, text, campaignId, contactId, stepId, trackingId } = params;
 
@@ -233,8 +234,8 @@ export class EmailService {
     workspaceId: string;
   }) {
     // This would be called as a queued job
+    const { campaignId, contactId, workspaceId } = params;
     try {
-      const { campaignId, contactId, workspaceId } = params;
 
       // Get campaign details with steps and inboxes
       const campaign = await prisma.campaign.findUnique({
@@ -313,10 +314,10 @@ export class EmailService {
 
         if (lastEmailLog) {
           const lastStepNumber = lastEmailLog.stepId
-            ? campaign.steps.find(s => s.id === lastEmailLog.stepId)?.stepNumber || 1
+            ? campaign.steps.find((s: any) => s.id === lastEmailLog.stepId)?.stepNumber || 1
             : 1;
           stepNumber = lastStepNumber + 1;
-          stepToSend = campaign.steps.find(s => s.stepNumber === stepNumber);
+          stepToSend = campaign.steps.find((s: any) => s.stepNumber === stepNumber);
         } else {
           stepToSend = campaign.steps[0];
         }
@@ -435,7 +436,7 @@ export class EmailService {
     }
   }
 
-  private async selectInbox(workspaceId: string, campaignInboxes: any[]) {
+  private async selectInbox(workspaceId: string, _campaignInboxes: any[]) {
     // Get all inboxes for workspace that are active and under daily limit
     const inboxes = await prisma.inbox.findMany({
       where: {
@@ -445,7 +446,7 @@ export class EmailService {
     });
 
     const availableInboxes = inboxes.filter(
-      i => i.sentCountToday < i.dailyLimit && i.healthScore > 0.3
+      (i: any) => i.sentCountToday < i.dailyLimit && i.healthScore > 0.3
     );
 
     if (availableInboxes.length === 0) {
@@ -453,7 +454,7 @@ export class EmailService {
     }
 
     // Sort by health score (descending) and then by sent count (ascending)
-    availableInboxes.sort((a, b) => {
+    availableInboxes.sort((a: any, b: any) => {
       if (b.healthScore !== a.healthScore) {
         return b.healthScore - a.healthScore;
       }
@@ -498,8 +499,8 @@ export class EmailService {
     }
 
     // Process spintax {option1|option2|option3}
-    processed = processed.replace(/\{([^{}]+)\}/g, (match, options) => {
-      const choices = options.split('|').map(s => s.trim());
+    processed = processed.replace(/\{([^{}]+)\}/g, (_match, options) => {
+      const choices = options.split('|').map((s: string) => s.trim());
       return choices[Math.floor(Math.random() * choices.length)];
     });
 

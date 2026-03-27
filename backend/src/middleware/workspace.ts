@@ -1,11 +1,11 @@
-import { Request, Response, NextFunction } from 'express';
+import { Response, NextFunction } from 'express';
 import { prisma } from '../config/database';
 import { ForbiddenError } from './error-handler';
 import { AuthRequest } from './auth';
 
 export async function workspaceMiddleware(
   req: AuthRequest,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ) {
   try {
@@ -47,10 +47,10 @@ export async function workspaceMiddleware(
 }
 
 export function withWorkspace(fn: Function) {
-  return async (req: AuthRequest, res: Response, next: NextFunction) => {
+  return async (req: AuthRequest, _res: Response, next: NextFunction) => {
     try {
-      await workspaceMiddleware(req, res, () => {
-        fn(req, res, next);
+      await workspaceMiddleware(req, _res, () => {
+        fn(req, _res, next);
       });
     } catch (error) {
       next(error);
@@ -84,7 +84,12 @@ export async function validatePlanLimits(
 
   if (!workspace) return false;
 
-  const limits: Record<string, number> = {
+  const limits: Record<string, {
+    campaigns: number;
+    inboxes: number;
+    teamMembers: number;
+    contacts: number;
+  }> = {
     [workspace.plan]: {
       campaigns: getCampaignLimit(workspace.plan),
       inboxes: getInboxLimit(workspace.plan),

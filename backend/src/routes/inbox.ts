@@ -1,12 +1,11 @@
-import { Router, Request, Response } from 'express';
-import crypto from 'crypto';
+import { Router, Response, NextFunction } from 'express';
 import { body, validationResult } from 'express-validator';
 import { google } from 'googleapis'; // Import Google APIs
 import { OAuth2Client } from 'google-auth-library';
 import { prisma } from '../config/database';
 import { authenticateToken, requireWorkspace, AuthRequest } from '../middleware/auth';
 import { ForbiddenError } from '../middleware/error-handler';
-import { encrypt, decrypt } from '../utils/crypto';
+import { encrypt } from '../utils/crypto';
 import { logger } from '../utils/logger';
 
 const router = Router();
@@ -51,7 +50,7 @@ router.post(
     body('provider').isIn(['GMAIL', 'SMTP']),
     body('providerName').optional().trim()
   ],
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -120,7 +119,7 @@ router.post(
 
       logger.info(`Inbox created: ${email} for workspace: ${req.workspace!.id}`);
 
-      res.status(201).json(inbox);
+      return res.status(201).json(inbox);
     } catch (error: any) {
       next(error);
     }
@@ -134,7 +133,7 @@ router.get(
   '/:inboxId',
   authenticateToken,
   requireWorkspace,
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { inboxId } = req.params;
 
@@ -176,7 +175,7 @@ router.put(
   '/:inboxId',
   authenticateToken,
   requireWorkspace,
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { inboxId } = req.params;
       const { email, isActive, dailyLimit } = req.body;
@@ -224,7 +223,7 @@ router.delete(
   '/:inboxId',
   authenticateToken,
   requireWorkspace,
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { inboxId } = req.params;
 
@@ -253,7 +252,7 @@ router.post(
   '/:inboxId/refresh-token',
   authenticateToken,
   requireWorkspace,
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { inboxId } = req.params;
 
@@ -304,7 +303,7 @@ router.get(
   '/:inboxId/health',
   authenticateToken,
   requireWorkspace,
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { inboxId } = req.params;
 

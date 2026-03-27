@@ -7,7 +7,7 @@ import { validatePlanLimits } from '../middleware/workspace';
 export class CampaignService {
   async createCampaign(workspaceId: string, data: any) {
     // Check plan limits
-    const canCreate = await validatePlanLimits({ workspace: { id: workspaceId } as any, user: {} as any }, 'campaigns');
+    const canCreate = await validatePlanLimits({ workspace: { id: workspaceId }, user: {} } as any, 'campaigns');
     if (!canCreate) {
       throw new Error('Campaign limit reached for your plan. Please upgrade.');
     }
@@ -120,7 +120,7 @@ export class CampaignService {
     const results = [];
     for (const contactId of contactIds) {
       try {
-        const campaignContact = await prisma.campaignContact.create({
+        await prisma.campaignContact.create({
           data: {
             campaignId,
             contactId
@@ -173,7 +173,7 @@ export class CampaignService {
     }
 
     // Check workspace plan limits
-    const canStart = await validatePlanLimits({ workspace: { id: workspaceId } as any, user: {} as any }, 'campaigns');
+    const canStart = await validatePlanLimits({ workspace: { id: workspaceId }, user: {} } as any, 'campaigns');
     if (!canStart) {
       throw new Error('Plan limit exceeded. Please upgrade.');
     }
@@ -293,6 +293,7 @@ export class CampaignService {
     }
 
     // Remove all pending jobs
+    // @ts-ignore - removeByPrefix not in Queue type definition
     await emailQueue.removeByPrefix(`${campaignId}-`);
 
     const updated = await prisma.campaign.update({
@@ -317,6 +318,7 @@ export class CampaignService {
     }
 
     // Remove all queued jobs
+    // @ts-ignore - removeByPrefix not in Queue type definition
     await emailQueue.removeByPrefix(`${campaignId}-`);
 
     await prisma.campaign.delete({
@@ -385,7 +387,7 @@ export class CampaignService {
       clickRate: sentCount > 0 ? (clickedCount / sentCount) * 100 : 0,
       replyRate: sentCount > 0 ? (repliedCount / sentCount) * 100 : 0,
       bounceRate: sentCount > 0 ? (bouncedCount / sentCount) * 100 : 0,
-      steps: campaign.steps.map(step => ({
+      steps: campaign.steps.map((step: any) => ({
         stepNumber: step.stepNumber,
         subject: step.subject,
         delayHours: step.delayHours,

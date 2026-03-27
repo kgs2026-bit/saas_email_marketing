@@ -1,8 +1,8 @@
-import { Router, Request, Response } from 'express';
+import { Router, Response, NextFunction } from 'express';
 import crypto from 'crypto';
 import { body, validationResult } from 'express-validator';
 import { prisma } from '../config/database';
-import { authenticateToken, AuthRequest } from '../middleware/auth';
+import { authenticateToken, requireWorkspace, requireRole, AuthRequest } from '../middleware/auth';
 import { workspaceMiddleware } from '../middleware/workspace';
 
 const router = Router();
@@ -16,7 +16,7 @@ const createWorkspaceValidation = [
 // @route   GET /api/workspaces
 // @desc    Get user's workspaces
 // @access  Private
-router.get('/', authenticateToken, async (req: AuthRequest, res: Response, next) => {
+router.get('/', authenticateToken, async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const memberships = await prisma.workspaceMember.findMany({
       where: { userId: req.user!.id },
@@ -61,7 +61,7 @@ router.post(
   '/',
   authenticateToken,
   createWorkspaceValidation,
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -69,7 +69,7 @@ router.post(
       }
 
       const { name, slug } = req.body;
-      const generatedSlug = slug || this.generateSlug(name);
+      const generatedSlug = slug || generateSlug(name);
 
       // Check if slug exists
       const existing = await prisma.workspace.findUnique({ where: { slug: generatedSlug } });
@@ -77,7 +77,7 @@ router.post(
         throw new Error('Workspace with this slug already exists');
       }
 
-      const workspace = await prisma.$transaction(async (tx) => {
+      const workspace = await prisma.$transaction(async (tx: any) => {
         const w = await tx.workspace.create({
           data: {
             name,
@@ -98,7 +98,7 @@ router.post(
         return w;
       });
 
-      res.status(201).json(workspace);
+      return res.status(201).json(workspace);
     } catch (error: any) {
       next(error);
     }
@@ -112,7 +112,7 @@ router.get(
   '/:workspaceId',
   authenticateToken,
   workspaceMiddleware,
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const workspace = await prisma.workspace.findUnique({
         where: { id: req.workspace!.id },
@@ -150,7 +150,7 @@ router.put(
   authenticateToken,
   workspaceMiddleware,
   requireRole(['ADMIN']),
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { name } = req.body;
 
@@ -183,7 +183,7 @@ router.post(
     body('email').isEmail().normalizeEmail(),
     body('role').optional().isIn(['ADMIN', 'MEMBER'])
   ],
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -191,7 +191,7 @@ router.post(
       }
 
       const { email, role = 'MEMBER' } = req.body;
-      const { workspaceId } = req.workspace!;
+      const { id: workspaceId } = req.workspace!;
 
       // Check if user exists
       const user = await prisma.user.findUnique({ where: { email } });
@@ -213,8 +213,7 @@ router.post(
 
         // TODO: Send invitation email
 
-        res.status(201).json(invitation);
-        return;
+        return res.status(201).json(invitation);
       }
 
       // Check if already member
@@ -240,7 +239,7 @@ router.post(
 
       // TODO: Send notification email
 
-      res.status(201).json(member);
+      return res.status(201).json(member);
     } catch (error: any) {
       next(error);
     }
@@ -254,7 +253,7 @@ router.get(
   '/:workspaceId/members',
   authenticateToken,
   workspaceMiddleware,
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const members = await prisma.workspaceMember.findMany({
         where: { workspaceId: req.workspace!.id },
@@ -289,7 +288,7 @@ router.put(
   authenticateToken,
   workspaceMiddleware,
   requireRole(['ADMIN']),
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { userId } = req.params;
       const { role } = req.body;
@@ -339,7 +338,7 @@ router.delete(
   authenticateToken,
   workspaceMiddleware,
   requireRole(['ADMIN']),
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { userId } = req.params;
 
@@ -372,7 +371,7 @@ router.delete(
   authenticateToken,
   workspaceMiddleware,
   requireRole(['ADMIN']),
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const workspace = await prisma.workspace.findUnique({
         where: { id: req.workspace!.id }

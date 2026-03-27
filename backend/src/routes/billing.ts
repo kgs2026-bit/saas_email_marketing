@@ -1,12 +1,12 @@
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import Stripe from 'stripe';
 import { prisma } from '../config/database';
-import { authenticateToken, requireWorkspace, AuthRequest } from '../middleware/auth';
-import { ForbiddenError } from '../middleware/error-handler';
+import { authenticateToken, requireWorkspace, requireRole, AuthRequest } from '../middleware/auth';
 
 const router = Router();
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  // @ts-ignore - Stripe API version type definition may be outdated
   apiVersion: '2024-06-20'
 });
 
@@ -102,7 +102,7 @@ const PLANS = {
 // @route   GET /api/billing/plans
 // @desc    Get all plans
 // @access  Private
-router.get('/plans', authenticateToken, (req: Request, res: Response) => {
+router.get('/plans', authenticateToken, (_req: Request, res: Response) => {
   res.json(PLANS);
 });
 
@@ -113,7 +113,7 @@ router.get(
   '/subscription',
   authenticateToken,
   requireWorkspace,
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const subscription = await prisma.subscription.findFirst({
         where: { workspaceId: req.workspace!.id },
@@ -135,7 +135,7 @@ router.post(
   authenticateToken,
   requireWorkspace,
   requireRole(['ADMIN']),
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { priceId, successUrl, cancelUrl } = req.body;
 
@@ -145,8 +145,8 @@ router.post(
 
       // Verify this is a valid price for our plans
       const validPriceIds = Object.values(PLANS)
-        .filter(p => p.priceId)
-        .map(p => p.priceId);
+        .filter((p: any) => p.priceId)
+        .map(p => (p as any).priceId as string);
 
       if (!validPriceIds.includes(priceId)) {
         throw new Error('Invalid price ID');
@@ -205,7 +205,7 @@ router.post(
   authenticateToken,
   requireWorkspace,
   requireRole(['ADMIN']),
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const workspace = await prisma.workspace.findUnique({
         where: { id: req.workspace!.id }
@@ -234,7 +234,7 @@ router.get(
   '/invoices',
   authenticateToken,
   requireWorkspace,
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const workspace = await prisma.workspace.findUnique({
         where: { id: req.workspace!.id }

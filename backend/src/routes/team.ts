@@ -1,8 +1,7 @@
-import { Router, Request, Response } from 'express';
+import { Router, Response, NextFunction } from 'express';
 import { body, validationResult } from 'express-validator';
 import { prisma } from '../config/database';
-import { authenticateToken, requireWorkspace, AuthRequest } from '../middleware/auth';
-import { requireRole } from '../middleware/auth';
+import { authenticateToken, requireWorkspace, requireRole, AuthRequest } from '../middleware/auth';
 import { ForbiddenError } from '../middleware/error-handler';
 
 const router = Router();
@@ -48,7 +47,7 @@ router.post(
     body('email').isEmail().normalizeEmail(),
     body('role').optional().isIn(['ADMIN', 'MEMBER'])
   ],
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -56,7 +55,7 @@ router.post(
       }
 
       const { email, role = 'MEMBER' } = req.body;
-      const { workspaceId } = req.workspace!;
+      const { id: workspaceId } = req.workspace!;
 
       // Check if user exists
       const user = await prisma.user.findUnique({ where: { email } });
@@ -95,7 +94,7 @@ router.post(
 
         // TODO: Send notification email
 
-        res.status(201).json(member);
+        return res.status(201).json(member);
       } else {
         // Create invitation for new user
         const token = crypto.randomBytes(32).toString('hex');
@@ -133,7 +132,7 @@ router.put(
   authenticateToken,
   requireWorkspace,
   requireRole(['ADMIN']),
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { userId } = req.params;
       const { role } = req.body;
@@ -182,7 +181,7 @@ router.delete(
   authenticateToken,
   requireWorkspace,
   requireRole(['ADMIN']),
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { userId } = req.params;
 
@@ -215,7 +214,7 @@ router.get(
   authenticateToken,
   requireWorkspace,
   requireRole(['ADMIN']),
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const invitations = await prisma.invitation.findMany({
         where: {
@@ -241,7 +240,7 @@ router.delete(
   authenticateToken,
   requireWorkspace,
   requireRole(['ADMIN']),
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { invitationId } = req.params;
 
@@ -263,10 +262,10 @@ router.post(
   '/invitations/:token/accept',
   async (req: Request, res: Response, next) => {
     try {
-      const { token } = req.params;
+      const { token: invitationToken } = req.params;
 
       const invitation = await prisma.invitation.findFirst({
-        where: { token }
+        where: { token: invitationToken }
       });
 
       if (!invitation) {
@@ -288,8 +287,8 @@ router.post(
       }
 
       const jwt = await import('jsonwebtoken');
-      const token = authHeader.split(' ')[1];
-      const payload = jwt.verify(token, process.env.JWT_SECRET!) as any;
+      const authToken = authHeader.split(' ')[1];
+      const payload = jwt.verify(authToken, process.env.JWT_SECRET!) as any;
 
       // Add user to workspace
       await prisma.workspaceMember.create({

@@ -1,11 +1,10 @@
-import { Router, Request, Response } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { body, validationResult } from 'express-validator';
 import passport from 'passport';
 import { authService } from '../services/auth.service';
 import { prisma } from '../config/database';
 import { authenticateToken, AuthRequest } from '../middleware/auth';
 import { authRateLimiter } from '../middleware/rate-limiter';
-import { ForbiddenError } from '../middleware/error-handler';
 
 const router = Router();
 
@@ -28,7 +27,7 @@ router.post(
   '/register',
   authRateLimiter,
   registerValidation,
-  async (req: Request, res: Response, next) => {
+  async (req: Request, res: Response, next: NextFunction) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -52,7 +51,7 @@ router.post(
   '/login',
   authRateLimiter,
   loginValidation,
-  async (req: Request, res: Response, next) => {
+  async (req: Request, res: Response, next: NextFunction) => {
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
@@ -135,7 +134,7 @@ router.post(
 router.post(
   '/logout',
   authenticateToken,
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { refreshToken } = req.body;
 
@@ -157,7 +156,7 @@ router.post(
 router.get(
   '/me',
   authenticateToken,
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const user = await prisma.user.findUnique({
         where: { id: req.user!.id },
@@ -191,7 +190,7 @@ router.get(
 
       res.json({
         user,
-        workspaces: memberships.map(m => m.workspace)
+        workspaces: memberships.map((m: any) => m.workspace)
       });
     } catch (error: any) {
       next(error);
@@ -209,7 +208,7 @@ router.post(
     body('currentPassword').notEmpty(),
     body('newPassword').isLength({ min: 8 })
   ],
-  async (req: AuthRequest, res: Response, next) => {
+  async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
       const { currentPassword, newPassword } = req.body;
 
