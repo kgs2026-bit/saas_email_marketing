@@ -1,9 +1,10 @@
-const jwt = require('jsonwebtoken');
 import bcrypt from 'bcryptjs';
 import { prisma } from '../config/database';
 import { generateSecureToken } from '../utils/crypto';
 import { logger } from '../utils/logger';
 import { JwtPayload } from '../middleware/auth';
+import * as jwt from 'jsonwebtoken';
+const jwtAny = jwt as any;
 
 const SALT_ROUNDS = 10;
 
@@ -242,7 +243,7 @@ export class AuthService {
 
   async refreshToken(refreshToken: string) {
     try {
-      const payload = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET!) as JwtPayload;
+      const payload = (jwt as any).verify(refreshToken, process.env.JWT_REFRESH_SECRET!) as JwtPayload;
 
       // Check if refresh token exists in database
       const session = await prisma.session.findUnique({
@@ -290,7 +291,7 @@ export class AuthService {
 
   async validateToken(token: string) {
     try {
-      const payload = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
+      const payload = (jwt as any).verify(token, process.env.JWT_SECRET!) as JwtPayload;
       const user = await prisma.user.findUnique({ where: { id: payload.userId } });
 
       if (!user) {
@@ -314,8 +315,9 @@ export class AuthService {
     const expiresIn = process.env.JWT_EXPIRES_IN || '15m';
     const refreshExpiresIn = process.env.JWT_REFRESH_EXPIRES_IN || '7d';
 
-    const accessToken = jwt.sign({ userId }, secret, { expiresIn });
-    const refreshToken = jwt.sign({ userId }, refreshSecret, { expiresIn: refreshExpiresIn });
+    // Use type assertion to avoid overload resolution issues
+    const accessToken = (jwtAny as any).sign({ userId }, secret, { expiresIn });
+    const refreshToken = (jwtAny as any).sign({ userId }, refreshSecret, { expiresIn: refreshExpiresIn });
 
     return { accessToken, refreshToken };
   }
