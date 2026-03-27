@@ -1,0 +1,104 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: email_saas_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
+      POSTGRES_DB: email_saas_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis/redis-stack-server:latest
+    container_name: email_saas_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: email_saas_backend
+    environment:
+      DATABASE_URL: "postgresql://postgres:postgres123@postgres:5432/email_saas_db"
+      JWT_SECRET: "change-this-in-production-to-32-random-chars"
+      JWT_REFRESH_SECRET: "change-this-in-production-to-32-random-chars"
+      JWT_EXPIRES_IN: "15m"
+      JWT_REFRESH_EXPIRES_IN: "7d"
+      GOOGLE_CLIENT_ID: "${GOOGLE_CLIENT_ID}"
+      GOOGLE_CLIENT_SECRET: "${GOOGLE_CLIENT_SECRET}"
+      GOOGLE_CALLBACK_URL: "/api/auth/google/callback"
+      STRIPE_SECRET_KEY: "${STRIPE_SECRET_KEY}"
+      STRIPE_WEBHOOK_SECRET: "${STRIPE_WEBHOOK_SECRET}"
+      STRIPE_PRICE_STARTER: "${STRIPE_PRICE_STARTER}"
+      STRIPE_PRICE_GROWTH: "${STRIPE_PRICE_GROWTH}"
+      STRIPE_PRICE_PRO: "${STRIPE_PRICE_PRO}"
+      REDIS_URL: "redis://redis:6379"
+      NODE_ENV: "development"
+      PORT: "3001"
+      FRONTEND_URL: "http://localhost:5173"
+      API_URL: "http://localhost:3001"
+      SMTP_HOST: "smtp.gmail.com"
+      SMTP_PORT: "587"
+      ENCRYPTION_KEY: "change-this-to-32-char-encryption-key"
+      TRACKING_DOMAIN: "http://localhost:3001"
+      OPEN_TRACKING_ENABLED: "true"
+      CLICK_TRACKING_ENABLED: "true"
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - ./backend/logs:/app/logs
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: npm run dev
+    networks:
+      - email_saas_network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: email_saas_frontend
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: "http://localhost:3001/api"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/dist
+    depends_on:
+      - backend
+    networks:
+      - email_saas_network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  email_saas_network:
+    driver: bridge
