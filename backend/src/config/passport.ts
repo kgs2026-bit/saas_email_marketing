@@ -3,63 +3,71 @@ import passport from 'passport';
 const GoogleStrategy = require('passport-google-oauth20');
 import { prisma } from '../config/database';
 
-// Configure Google OAuth strategy
-passport.use(
-  new GoogleStrategy(
-    {
-      clientID: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      callbackURL: `${process.env.API_URL!}/api/auth/google/callback`
-    },
-    async (_accessToken, _refreshToken, profile: any, done: any) => {
-      try {
-        const { id, emails, displayName, photos } = profile;
+// Configure Google OAuth strategy only if env vars are set
+const clientID = process.env.GOOGLE_CLIENT_ID;
+const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+const apiUrl = process.env.API_URL;
 
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const user = await prisma.user.upsert({
-          where: { googleId: id },
-          update: {
-            name: displayName,
-            avatarUrl: photos?.[0]?.value
-          },
-          create: {
-            googleId: id,
-            email: emails[0].value,
-            name: displayName,
-            avatarUrl: photos?.[0]?.value
+if (clientID && clientSecret && apiUrl) {
+  passport.use(
+    new GoogleStrategy(
+      {
+        clientID,
+        clientSecret,
+        callbackURL: `${apiUrl}/api/auth/google/callback`
+      },
+      async (_accessToken, _refreshToken, profile: any, done: any) => {
+        try {
+          const { id, emails, displayName, photos } = profile;
+
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const user = await prisma.user.upsert({
+            where: { googleId: id },
+            update: {
+              name: displayName,
+              avatarUrl: photos?.[0]?.value
+            },
+            create: {
+              googleId: id,
+              email: emails[0].value,
+              name: displayName,
+              avatarUrl: photos?.[0]?.value
+            }
+          });
+
+          // Create workspace if user doesn't have one
+          const existingWorkspace = await prisma.workspace.findFirst({
+            where: { ownerId: user.id }
+          });
+
+          if (!existingWorkspace) {
+            const workspace = await prisma.workspace.create({
+              data: {
+                name: `${displayName}'s Workspace`,
+                slug: `${displayName?.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Date.now()}`,
+                ownerId: user.id
+              }
+            });
+
+            await prisma.workspaceMember.create({
+              data: {
+                userId: user.id,
+                workspaceId: workspace.id,
+                role: 'ADMIN'
+              }
+            });
           }
-        });
 
-        // Create workspace if user doesn't have one
-        const existingWorkspace = await prisma.workspace.findFirst({
-          where: { ownerId: user.id }
-        });
-
-        if (!existingWorkspace) {
-          const workspace = await prisma.workspace.create({
-            data: {
-              name: `${displayName}'s Workspace`,
-              slug: `${displayName?.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Date.now()}`,
-              ownerId: user.id
-            }
-          });
-
-          await prisma.workspaceMember.create({
-            data: {
-              userId: user.id,
-              workspaceId: workspace.id,
-              role: 'ADMIN'
-            }
-          });
+          done(null, user);
+        } catch (error) {
+          done(error);
         }
-
-        done(null, user);
-      } catch (error) {
-        done(error);
       }
-    }
-  )
-);
+    )
+  );
+} else {
+  console.log('⚠️  Google OAuth not configured: GOOGLE_CLIENT_ID or GOOGLE_CLIENT_SECRET missing');
+}
 
 // Serialize and deserialize user
 passport.serializeUser((user: any, done) => {
