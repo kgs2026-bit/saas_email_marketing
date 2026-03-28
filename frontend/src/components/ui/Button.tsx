@@ -18,6 +18,7 @@ const Button = ({
 }: ButtonProps) => {
   const baseStyles = `
     inline-flex items-center justify-center font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors
+    disabled:opacity-50 disabled:cursor-not-allowed
   `;
 
   const variants = {

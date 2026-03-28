@@ -10,7 +10,14 @@
       "Bash(git push:*)",
       "Bash(npx tsc:*)",
       "Bash(npm install:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(vercel --version)",
+      "Bash(curl -s https://backend-production-1bf96.up.railway.app/health)",
+      "Bash(curl -s http://backend-production-1bf96.up.railway.app/health)",
+      "Bash(grep -o \"text-white\\\\|text-gray-900\\\\|text-primary-700\" dist/assets/index-*.css)",
+      "Bash(curl -v --connect-timeout 10 --max-time 30 https://backend-production-1bf96.up.railway.app/health)",
+      "Bash(grep -o \"bg-primary-600\" dist/assets/index-*.css)",
+      "Bash(curl -s --max-time 10 http://backend-production-1bf96.up.railway.app/health)"
     ]
   }
 }
