@@ -5,22 +5,14 @@
       "src": "frontend/package.json",
       "use": "@vercel/static-build",
       "config": {
-        "distDir": "dist",
-        "buildCommand": "npm run build"
+        "distDir": "dist"
       }
     }
   ],
   "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/backend/index.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/frontend/$1"
-    }
+    { "src": "/(.*)", "dest": "/$1" }
   ],
   "env": {
-    "VITE_API_URL": "@api_url"
+    "VITE_API_URL": "https://backend-production-1bf96.up.railway.app/api"
   }
 }

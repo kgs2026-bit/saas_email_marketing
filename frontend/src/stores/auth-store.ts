@@ -42,7 +42,7 @@ api.interceptors.response.use(
           originalRequest.headers.Authorization = `Bearer ${accessToken}`;
 
           return api(originalRequest);
-        } catch (refreshError) {
+        } catch (refreshError: any) {
           // Refresh failed, redirect to login
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
@@ -195,7 +195,7 @@ export const useAuthStore = create<AuthState>()(
           if (refreshToken) {
             await api.post('/auth/logout', { refreshToken }).catch(() => {});
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error('Logout error:', error);
         } finally {
           localStorage.clear();
@@ -239,7 +239,7 @@ export const useAuthStore = create<AuthState>()(
             isAuthenticated: true,
             isLoading: false
           });
-        } catch (error) {
+        } catch (error: any) {
           set({ isLoading: false });
           // If 401, clear storage and redirect
           if (error.response?.status === 401) {

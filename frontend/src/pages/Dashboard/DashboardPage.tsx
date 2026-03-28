@@ -4,12 +4,12 @@ import {
   EnvelopeIcon,
   MegaphoneIcon,
   UsersIcon,
-  TrendingUpIcon,
+  ArrowUpIcon,
   ArrowRightIcon
 } from '@heroicons/react/24/outline';
 import { useAuthStore } from '../../stores/auth-store';
 import Button from '../../components/ui/Button';
-import Card from '../../components/ui/Card';
+import Card, { CardHeader, CardBody } from '../../components/ui/Card';
 
 const DashboardPage = () => {
   const { currentWorkspace } = useAuthStore();
@@ -158,14 +158,14 @@ const DashboardPage = () => {
                 <div className="text-sm text-gray-500 mb-1">Open Rate</div>
                 <div className="flex items-center">
                   <span className="text-3xl font-bold text-gray-900">{stats.openRate}%</span>
-                  <TrendingUpIcon className="ml-2 h-5 w-5 text-green-500" />
+                  <ArrowUpIcon className="ml-2 h-5 w-5 text-green-500" />
                 </div>
               </div>
               <div>
                 <div className="text-sm text-gray-500 mb-1">Reply Rate</div>
                 <div className="flex items-center">
                   <span className="text-3xl font-bold text-gray-900">{stats.replyRate}%</span>
-                  <TrendingUpIcon className="ml-2 h-5 w-5 text-green-500" />
+                  <ArrowUpIcon className="ml-2 h-5 w-5 text-green-500" />
                 </div>
               </div>
             </div>
@@ -203,7 +203,7 @@ const DashboardPage = () => {
             </Link>
             <Link to="/analytics">
               <Button variant="outline" className="w-full justify-start">
-                <TrendingUpIcon className="h-5 w-5 mr-3" />
+                <ArrowUpIcon className="h-5 w-5 mr-3" />
                 View Analytics
               </Button>
             </Link>

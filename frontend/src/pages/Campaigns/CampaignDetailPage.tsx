@@ -8,7 +8,7 @@ import {
   ChevronRightIcon
 } from '@heroicons/react/24/outline';
 import Button from '../../components/ui/Button';
-import Card from '../../components/ui/Card';
+import Card, { CardHeader, CardBody } from '../../components/ui/Card';
 
 const CampaignDetailPage = () => {
   const { campaignId } = useParams();

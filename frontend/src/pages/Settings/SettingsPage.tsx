@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { UserIcon, EnvelopeIcon, BellIcon, ShieldIcon } from '@heroicons/react/24/outline';
+import { UserIcon, EnvelopeIcon, BellIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 
@@ -16,7 +16,7 @@ const SettingsPage = () => {
   const tabs = [
     { id: 'profile', name: 'Profile', icon: UserIcon },
     { id: 'notifications', name: 'Notifications', icon: BellIcon },
-    { id: 'security', name: 'Security', icon: ShieldIcon },
+    { id: 'security', name: 'Security', icon: ShieldCheckIcon },
     { id: 'integrations', name: 'Integrations', icon: EnvelopeIcon }
   ];
 
